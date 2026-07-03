@@ -1,24 +1,21 @@
 'use client'
 
 import { MessageCircle } from 'lucide-react'
-import { WHATSAPP_NUMBER, WHATSAPP_MESSAGE } from '@/lib/constants'
 
 export const WhatsAppButton = () => {
-  const handleWhatsAppClick = () => {
-    const message = encodeURIComponent(WHATSAPP_MESSAGE)
-    const number = WHATSAPP_NUMBER.replace(/\s/g, '')
-    const url = `https://wa.me/${number}?text=${message}`
-    window.open(url, '_blank')
-  }
+  const phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '1234567890'
+  const message = encodeURIComponent('Hello, I need help with my Wayfair complaint')
+  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`
 
   return (
-    <button
-      onClick={handleWhatsAppClick}
-      className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg animate-float z-50 transition-all duration-300"
-      aria-label="Open WhatsApp"
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition transform hover:scale-110 z-40"
       title="Chat with us on WhatsApp"
     >
       <MessageCircle size={24} />
-    </button>
+    </a>
   )
 }

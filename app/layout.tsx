@@ -1,18 +1,15 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Wayfair Customer Support',
-  description: 'Submit your complaint and our support team will review your case',
-  keywords: 'customer support, complaints, Wayfair, help',
-  authors: [{ name: 'Wayfair Support' }],
+  description: 'Submit and track your complaints with Wayfair customer support',
+  keywords: ['Wayfair', 'support', 'complaints', 'customer service'],
   viewport: 'width=device-width, initial-scale=1',
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://wayfair-support.vercel.app',
-    siteName: 'Wayfair Customer Support',
-  },
+  robots: 'index, follow',
 }
 
 export default function RootLayout({
@@ -26,7 +23,7 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className="bg-white text-gray-900">
+      <body className={inter.className}>
         {children}
       </body>
     </html>
