@@ -1,0 +1,162 @@
+{
+  "version": "1.0.0",
+  "name": "Wayfair Support Database",
+  "description": "Database schema for Wayfair customer support complaint system",
+  "tables": [
+    {
+      "name": "complaints",
+      "description": "Stores customer complaints",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "default": "gen_random_uuid()",
+          "description": "Unique complaint identifier"
+        },
+        {
+          "name": "case_reference",
+          "type": "varchar(255)",
+          "unique": true,
+          "not_null": true,
+          "description": "Unique case reference number"
+        },
+        {
+          "name": "full_name",
+          "type": "varchar(255)",
+          "not_null": true,
+          "description": "Customer's full name"
+        },
+        {
+          "name": "email",
+          "type": "varchar(255)",
+          "not_null": true,
+          "description": "Customer's email address"
+        },
+        {
+          "name": "phone",
+          "type": "varchar(20)",
+          "not_null": true,
+          "description": "Customer's phone number"
+        },
+        {
+          "name": "country",
+          "type": "varchar(100)",
+          "not_null": true,
+          "description": "Customer's country"
+        },
+        {
+          "name": "order_reference",
+          "type": "varchar(255)",
+          "not_null": true,
+          "description": "Wayfair order reference number"
+        },
+        {
+          "name": "category",
+          "type": "varchar(100)",
+          "not_null": true,
+          "description": "Complaint category"
+        },
+        {
+          "name": "subject",
+          "type": "varchar(255)",
+          "not_null": true,
+          "description": "Complaint subject line"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "not_null": true,
+          "description": "Detailed complaint description"
+        },
+        {
+          "name": "contact_method",
+          "type": "varchar(50)",
+          "not_null": true,
+          "description": "Preferred contact method (email, phone, whatsapp)"
+        },
+        {
+          "name": "status",
+          "type": "varchar(50)",
+          "default": "pending",
+          "not_null": true,
+          "description": "Complaint status (pending, in_review, resolved, closed)"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "NOW()",
+          "description": "When the complaint was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "NOW()",
+          "description": "When the complaint was last updated"
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "description": "Admin notes about the complaint"
+        },
+        {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "description": "When the complaint was resolved"
+        }
+      ]
+    },
+    {
+      "name": "audit_logs",
+      "description": "Stores audit trail for complaint status changes",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "primary_key": true,
+          "default": "gen_random_uuid()",
+          "description": "Unique audit log identifier"
+        },
+        {
+          "name": "complaint_id",
+          "type": "uuid",
+          "not_null": true,
+          "foreign_key": "complaints(id)",
+          "description": "Reference to complaint"
+        },
+        {
+          "name": "action",
+          "type": "varchar(255)",
+          "not_null": true,
+          "description": "Action performed"
+        },
+        {
+          "name": "old_status",
+          "type": "varchar(50)",
+          "description": "Previous status"
+        },
+        {
+          "name": "new_status",
+          "type": "varchar(50)",
+          "description": "New status"
+        },
+        {
+          "name": "admin_notes",
+          "type": "text",
+          "description": "Notes from admin"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "NOW()",
+          "description": "When the action was recorded"
+        },
+        {
+          "name": "created_by",
+          "type": "varchar(255)",
+          "description": "User who performed the action"
+        }
+      ]
+    }
+  ]
+}
