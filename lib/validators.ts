@@ -1,79 +1,93 @@
-export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
-export const validatePhone = (phone: string): boolean => {
-  // Basic phone validation: 10-15 digits with optional +, -, space, ()
-  const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/
-  return phoneRegex.test(phone.replace(/\s/g, ''))
-}
-
-export const validateRequired = (value: string | undefined): boolean => {
-  return !!value && value.trim().length > 0
-}
-
-export const validateUrl = (url: string): boolean => {
-  try {
-    new URL(url)
-    return true
-  } catch {
-    return false
-  }
-}
+import { ComplaintFormData } from './types'
 
 export interface FormError {
   field: string
   message: string
 }
 
-export const validateComplaintForm = (data: any): FormError[] => {
+export const validateComplaintForm = (data: ComplaintFormData): FormError[] => {
   const errors: FormError[] = []
 
-  if (!validateRequired(data.fullName)) {
-    errors.push({ field: 'fullName', message: 'Full name is required' })
+  // Full Name validation
+  if (!data.fullName || data.fullName.trim().length < 2) {
+    errors.push({
+      field: 'fullName',
+      message: 'Full name is required and must be at least 2 characters',
+    })
   }
 
-  if (!validateRequired(data.email)) {
-    errors.push({ field: 'email', message: 'Email is required' })
-  } else if (!validateEmail(data.email)) {
-    errors.push({ field: 'email', message: 'Invalid email format' })
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!data.email || !emailRegex.test(data.email)) {
+    errors.push({
+      field: 'email',
+      message: 'Valid email address is required',
+    })
   }
 
-  if (!validateRequired(data.phone)) {
-    errors.push({ field: 'phone', message: 'Phone number is required' })
-  } else if (!validatePhone(data.phone)) {
-    errors.push({ field: 'phone', message: 'Invalid phone number format' })
+  // Phone validation
+  const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/
+  if (!data.phone || !phoneRegex.test(data.phone)) {
+    errors.push({
+      field: 'phone',
+      message: 'Valid phone number is required',
+    })
   }
 
-  if (!validateRequired(data.country)) {
-    errors.push({ field: 'country', message: 'Country is required' })
+  // Country validation
+  if (!data.country || data.country.trim().length < 2) {
+    errors.push({
+      field: 'country',
+      message: 'Country is required',
+    })
   }
 
-  if (!validateRequired(data.orderReference)) {
-    errors.push({ field: 'orderReference', message: 'Order/Reference number is required' })
+  // Order reference validation
+  if (!data.orderReference || data.orderReference.trim().length < 2) {
+    errors.push({
+      field: 'orderReference',
+      message: 'Order or reference number is required',
+    })
   }
 
-  if (!validateRequired(data.category)) {
-    errors.push({ field: 'category', message: 'Category is required' })
+  // Category validation
+  if (!data.category) {
+    errors.push({
+      field: 'category',
+      message: 'Please select a complaint category',
+    })
   }
 
-  if (!validateRequired(data.subject)) {
-    errors.push({ field: 'subject', message: 'Subject is required' })
+  // Subject validation
+  if (!data.subject || data.subject.trim().length < 5) {
+    errors.push({
+      field: 'subject',
+      message: 'Subject is required and must be at least 5 characters',
+    })
   }
 
-  if (!validateRequired(data.description)) {
-    errors.push({ field: 'description', message: 'Description is required' })
-  } else if (data.description.length < 10) {
-    errors.push({ field: 'description', message: 'Description must be at least 10 characters' })
+  // Description validation
+  if (!data.description || data.description.trim().length < 10) {
+    errors.push({
+      field: 'description',
+      message: 'Description is required and must be at least 10 characters',
+    })
   }
 
-  if (!validateRequired(data.contactMethod)) {
-    errors.push({ field: 'contactMethod', message: 'Preferred contact method is required' })
+  // Contact method validation
+  if (!data.contactMethod) {
+    errors.push({
+      field: 'contactMethod',
+      message: 'Please select a preferred contact method',
+    })
   }
 
+  // Confirmation validation
   if (!data.confirmed) {
-    errors.push({ field: 'confirmed', message: 'You must confirm the information is accurate' })
+    errors.push({
+      field: 'confirmed',
+      message: 'You must confirm the information is accurate',
+    })
   }
 
   return errors

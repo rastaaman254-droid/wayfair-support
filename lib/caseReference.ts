@@ -1,20 +1,28 @@
-/**
- * Generate a unique case reference for complaints
- * Format: WF-YYYYMMDD-XXXXX or WFR-7G9KX2 style
- */
 export const generateCaseReference = (): string => {
+  const prefix = 'WF'
+  const year = new Date().getFullYear()
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(2, 8).toUpperCase()
-  const year = new Date().getFullYear()
-  const month = String(new Date().getMonth() + 1).padStart(2, '0')
-  const day = String(new Date().getDate()).padStart(2, '0')
   
-  // Format: WF-2026-XXXXXX
-  return `WF-${year}${month}${day}-${random}`
+  return `${prefix}-${year}-${random}${timestamp.toString().slice(-4)}`
 }
 
-export const validateCaseReference = (ref: string): boolean => {
-  // Validate format WF-YYYYMMDD-XXXXX
-  const regex = /^WF-\d{8}-[A-Z0-9]{6}$/
-  return regex.test(ref)
+export const formatDate = (date: string | Date): string => {
+  return new Date(date).toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+export const formatPhoneNumber = (phone: string): string => {
+  // Remove all non-digit characters except +
+  const cleaned = phone.replace(/[^\d+]/g, '')
+  
+  // Basic formatting for international numbers
+  if (cleaned.startsWith('+')) {
+    return cleaned
+  }
+  
+  return `+${cleaned}`
 }

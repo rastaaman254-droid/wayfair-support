@@ -1,20 +1,3 @@
-export interface Complaint {
-  id: string
-  case_reference: string
-  full_name: string
-  email: string
-  phone: string
-  country: string
-  order_reference: string
-  category: string
-  subject: string
-  description: string
-  contact_method: string
-  status: 'pending' | 'in_review' | 'resolved' | 'closed'
-  created_at: string
-  updated_at: string
-}
-
 export interface ComplaintFormData {
   fullName: string
   email: string
@@ -28,9 +11,10 @@ export interface ComplaintFormData {
   confirmed: boolean
 }
 
-export interface AdminUser {
+export interface Complaint extends ComplaintFormData {
   id: string
-  email: string
-  role: 'admin'
+  case_reference: string
+  status: 'pending' | 'in_review' | 'resolved' | 'closed'
   created_at: string
+  updated_at: string
 }

@@ -1,10 +1,13 @@
 export const COMPLAINT_CATEGORIES = [
-  { value: 'delivery', label: 'Delivery' },
-  { value: 'refund', label: 'Refund' },
+  { value: 'delivery', label: 'Delivery Issues' },
+  { value: 'product_quality', label: 'Product Quality' },
   { value: 'damaged', label: 'Damaged Item' },
-  { value: 'missing', label: 'Missing Item' },
-  { value: 'payment', label: 'Payment' },
-  { value: 'account', label: 'Account' },
+  { value: 'wrong_item', label: 'Wrong Item Received' },
+  { value: 'missing_parts', label: 'Missing Parts' },
+  { value: 'billing', label: 'Billing Issue' },
+  { value: 'returns', label: 'Returns & Refunds' },
+  { value: 'customer_service', label: 'Customer Service' },
+  { value: 'website', label: 'Website Issues' },
   { value: 'other', label: 'Other' },
 ]
 
@@ -21,11 +24,4 @@ export const COMPLAINT_STATUS = [
   { value: 'closed', label: 'Closed' },
 ]
 
-export const WAYFAIR_PURPLE = '#7c2fd4'
-export const WAYFAIR_PURPLE_DARK = '#5a1fa8'
-export const WAYFAIR_PURPLE_LIGHT = '#9b5dd4'
-
-export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+44 7853 169761'
-export const WHATSAPP_MESSAGE = 'Hello, I need help regarding my Wayfair complaint.'
-
-export const FORMSPREE_ID = process.env.NEXT_PUBLIC_FORMSPREE_ID || 'mojzklze'
+export const FORMSPREE_ID = process.env.NEXT_PUBLIC_FORMSPREE_ID || ''
