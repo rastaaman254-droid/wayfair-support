@@ -2,38 +2,38 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import toast, { Toaster } from 'react-hot-toast'
+import { supabase } from '@/lib/supabase'
+import { validateComplaintForm } from '@/lib/validators'
+import { generateCaseReference } from '@/lib/caseReference'
+import { ComplaintFormData } from '@/lib/types'
+import { COMPLAINT_CATEGORIES, CONTACT_METHODS } from '@/lib/constants'
 import { InputField } from './InputField'
 import { TextAreaField } from './TextAreaField'
 import { SelectField } from './SelectField'
 import { CheckboxField } from './CheckboxField'
-import { validateComplaintForm, FormError } from '@/lib/validators'
-import { generateCaseReference } from '@/lib/caseReference'
-import { supabase } from '@/lib/supabase'
-import { COMPLAINT_CATEGORIES, CONTACT_METHODS, FORMSPREE_ID } from '@/lib/constants'
-import { ComplaintFormData } from '@/lib/types'
+import toast, { Toaster } from 'react-hot-toast'
+
+const initialFormData: ComplaintFormData = {
+  fullName: '',
+  email: '',
+  phone: '',
+  country: '',
+  orderReference: '',
+  category: '',
+  subject: '',
+  description: '',
+  contactMethod: '',
+  confirmed: false,
+}
 
 export const ComplaintForm = () => {
-  const router = useRouter()
+  const [formData, setFormData] = useState<ComplaintFormData>(initialFormData)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [formData, setFormData] = useState<ComplaintFormData>({
-    fullName: '',
-    email: '',
-    phone: '',
-    country: '',
-    orderReference: '',
-    category: '',
-    subject: '',
-    description: '',
-    contactMethod: '',
-    confirmed: false,
-  })
+  const router = useRouter()
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target as any
     const fieldValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
 
     setFormData((prev) => ({
@@ -51,7 +51,7 @@ export const ComplaintForm = () => {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrors({})
@@ -60,12 +60,12 @@ export const ComplaintForm = () => {
       // Validate form
       const validationErrors = validateComplaintForm(formData)
       if (validationErrors.length > 0) {
-        const errorMap = validationErrors.reduce((acc, err) => {
-          acc[err.field] = err.message
-          return acc
-        }, {} as Record<string, string>)
+        const errorMap: Record<string, string> = {}
+        validationErrors.forEach((error) => {
+          errorMap[error.field] = error.message
+        })
         setErrors(errorMap)
-        toast.error('Please fix all errors')
+        toast.error('Please fix the errors below')
         setLoading(false)
         return
       }
@@ -73,7 +73,7 @@ export const ComplaintForm = () => {
       // Generate case reference
       const caseReference = generateCaseReference()
 
-      // Save to Supabase
+      // Submit to Supabase
       const { error } = await supabase.from('complaints').insert([
         {
           case_reference: caseReference,
@@ -94,30 +94,41 @@ export const ComplaintForm = () => {
         throw error
       }
 
-      // Send confirmation via Formspree
-      const formspreeResponse = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          email: formData.email,
-          name: formData.fullName,
-          message: `New complaint submitted: ${formData.subject}\n\nCase Reference: ${caseReference}\n\nDescription: ${formData.description}`,
-          _subject: `Wayfair Complaint Confirmation - ${caseReference}`,
-        }),
-        headers: {
-          Accept: 'application/json',
-        },
-      })
-
-      if (!formspreeResponse.ok) {
-        console.error('Formspree error:', formspreeResponse.statusText)
+      // Send email notification
+      try {
+        const formspreeId = process.env.NEXT_PUBLIC_FORMSPREE_ID
+        if (formspreeId) {
+          await fetch(`https://formspree.io/f/${formspreeId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              'Case Reference': caseReference,
+              'Full Name': formData.fullName,
+              'Email': formData.email,
+              'Phone': formData.phone,
+              'Country': formData.country,
+              'Order Reference': formData.orderReference,
+              'Category': formData.category,
+              'Subject': formData.subject,
+              'Description': formData.description,
+              'Contact Method': formData.contactMethod,
+            }),
+          })
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError)
       }
 
       toast.success('Complaint submitted successfully!')
-
-      // Redirect to success page with case reference
-      router.push(`/success?caseRef=${caseReference}`)
+      
+      // Redirect to success page
+      setTimeout(() => {
+        router.push('/success')
+      }, 1000)
     } catch (err) {
-      console.error('Form submission error:', err)
+      console.error('Error submitting complaint:', err)
       toast.error('Failed to submit complaint. Please try again.')
     } finally {
       setLoading(false)
@@ -128,76 +139,109 @@ export const ComplaintForm = () => {
     <>
       <Toaster position="top-center" />
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField
-            label="Full Name"
-            name="fullName"
-            type="text"
-            value={formData.fullName}
-            onChange={handleChange}
-            error={errors.fullName}
-            placeholder="John Doe"
-            required
-          />
-
-          <InputField
-            label="Email Address"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            error={errors.email}
-            placeholder="john@example.com"
-            required
-          />
+        {/* Personal Information */}
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Personal Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="Full Name"
+              name="fullName"
+              type="text"
+              value={formData.fullName}
+              onChange={handleChange}
+              error={errors.fullName}
+              placeholder="John Doe"
+              required
+            />
+            <InputField
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              placeholder="john@example.com"
+              required
+            />
+            <InputField
+              label="Phone Number"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              error={errors.phone}
+              placeholder="+1 (555) 123-4567"
+              required
+            />
+            <InputField
+              label="Country"
+              name="country"
+              type="text"
+              value={formData.country}
+              onChange={handleChange}
+              error={errors.country}
+              placeholder="United States"
+              required
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InputField
-            label="Phone Number"
-            name="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={handleChange}
-            error={errors.phone}
-            placeholder="+44 123 456 7890"
-            required
-          />
-
-          <InputField
-            label="Country"
-            name="country"
-            type="text"
-            value={formData.country}
-            onChange={handleChange}
-            error={errors.country}
-            placeholder="United Kingdom"
-            required
-          />
+        {/* Order Information */}
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Order Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <InputField
+              label="Order / Reference Number"
+              name="orderReference"
+              type="text"
+              value={formData.orderReference}
+              onChange={handleChange}
+              error={errors.orderReference}
+              placeholder="ORD-2024-123456"
+              required
+            />
+            <SelectField
+              label="Complaint Category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              error={errors.category}
+              options={COMPLAINT_CATEGORIES}
+              required
+            />
+          </div>
         </div>
 
-        <InputField
-          label="Order / Reference Number"
-          name="orderReference"
-          type="text"
-          value={formData.orderReference}
-          onChange={handleChange}
-          error={errors.orderReference}
-          placeholder="WF-2026-123456"
-          required
-        />
+        {/* Complaint Details */}
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Complaint Details</h3>
+          <div className="space-y-4">
+            <InputField
+              label="Subject"
+              name="subject"
+              type="text"
+              value={formData.subject}
+              onChange={handleChange}
+              error={errors.subject}
+              placeholder="Brief summary of your complaint"
+              required
+            />
+            <TextAreaField
+              label="Detailed Description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              error={errors.description}
+              placeholder="Please provide as much detail as possible about your complaint..."
+              required
+              rows={6}
+            />
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SelectField
-            label="Category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            error={errors.category}
-            options={COMPLAINT_CATEGORIES}
-            required
-          />
-
+        {/* Contact Preference */}
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Contact Preference</h3>
           <SelectField
             label="Preferred Contact Method"
             name="contactMethod"
@@ -209,43 +253,39 @@ export const ComplaintForm = () => {
           />
         </div>
 
-        <InputField
-          label="Subject"
-          name="subject"
-          type="text"
-          value={formData.subject}
-          onChange={handleChange}
-          error={errors.subject}
-          placeholder="Brief description of your issue"
-          required
-        />
+        {/* Confirmation */}
+        <div>
+          <CheckboxField
+            label="I confirm that the above information is accurate and complete"
+            name="confirmed"
+            checked={formData.confirmed}
+            onChange={handleChange}
+            error={errors.confirmed}
+            required
+          />
+        </div>
 
-        <TextAreaField
-          label="Description of the Problem"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          error={errors.description}
-          placeholder="Please provide detailed information about your complaint..."
-          rows={6}
-          required
-        />
-
-        <CheckboxField
-          name="confirmed"
-          checked={formData.confirmed}
-          onChange={handleChange}
-          error={errors.confirmed}
-          label="I confirm the information provided is accurate and complete."
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-lg transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Submitting...' : 'Submit Complaint'}
-        </button>
+        {/* Submit Button */}
+        <div className="flex gap-4 pt-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-primary hover:bg-primary-dark disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition"
+          >
+            {loading ? 'Submitting...' : 'Submit Complaint'}
+          </button>
+          <button
+            type="reset"
+            onClick={() => {
+              setFormData(initialFormData)
+              setErrors({})
+            }}
+            disabled={loading}
+            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 text-gray-900 font-bold py-3 px-4 rounded-lg transition"
+          >
+            Clear Form
+          </button>
+        </div>
       </form>
     </>
   )

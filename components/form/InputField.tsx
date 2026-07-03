@@ -1,24 +1,40 @@
 'use client'
 
-import { InputHTMLAttributes } from 'react'
-
-interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputFieldProps {
   label: string
+  name: string
+  type?: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   error?: string
+  placeholder?: string
   required?: boolean
 }
 
-export const InputField = ({ label, error, required, ...props }: InputFieldProps) => {
+export const InputField = ({
+  label,
+  name,
+  type = 'text',
+  value,
+  onChange,
+  error,
+  placeholder,
+  required,
+}: InputFieldProps) => {
   return (
-    <div className="mb-4">
-      <label className="block text-gray-700 font-medium mb-2">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+    <div className="w-full">
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
-        {...props}
-        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition ${
-          error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+          error ? 'border-red-500' : 'border-gray-300'
         }`}
       />
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
